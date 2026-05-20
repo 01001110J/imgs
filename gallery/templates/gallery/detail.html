@@ -1,0 +1,41 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}Detalle{% endblock %}
+
+{% block content %}
+<main class="page detail-page">
+    <section class="detail-layout">
+        <div>
+            <img class="hero-image" src="{{ image.image.url }}" alt="{{ image.title|default:'imagen' }}" draggable="true" data-drag-url="{{ image.image.url }}">
+        </div>
+        <aside class="detail-side">
+            {% if image.title %}<h1>{{ image.title }}</h1>{% endif %}
+            {% if image.description %}<p>{{ image.description }}</p>{% endif %}
+            <div class="chips">
+                {% for tag in image.tags.all %}<span>#{{ tag.name }}</span>{% endfor %}
+            </div>
+            <div class="detail-actions">
+                <a class="btn" href="{% url 'gallery:edit' image.id %}">Editar</a>
+                <form method="post" action="{% url 'gallery:delete' image.id %}" onsubmit="return confirm('Eliminar imagen?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+                <a class="btn btn-light" href="{{ image.image.url }}" download>Descargar</a>
+            </div>
+        </aside>
+    </section>
+
+    <section class="similar-head">
+        <h2>Imagenes similares</h2>
+    </section>
+    <section class="masonry-grid three-col">
+        {% for item in similar_images %}
+            <a class="visual-card" href="{% url 'gallery:detail' item.id %}">
+                <img src="{{ item.image.url }}" alt="{{ item.title|default:'similar' }}" draggable="true" data-drag-url="{{ item.image.url }}">
+            </a>
+        {% empty %}
+            <p class="empty-note">Aun no hay similares por tags.</p>
+        {% endfor %}
+    </section>
+</main>
+{% endblock %}

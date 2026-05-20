@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Galeria{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'gallery/styles.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <form method="get" action="{% url 'gallery:home' %}" class="search-wrap">
+            <input name="q" type="text" value="{{ query|default:'' }}" placeholder="Search for inspiration...">
+        </form>
+    </header>
+    {% block content %}{% endblock %}
+    <script src="{% static 'gallery/tags.js' %}"></script>
+    <script src="{% static 'gallery/gallery.js' %}"></script>
+</body>
+</html>

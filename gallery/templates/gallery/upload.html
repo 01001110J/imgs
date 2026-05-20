@@ -1,0 +1,50 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}{% if mode == 'edit' %}Editar{% else %}Subir{% endif %}{% endblock %}
+
+{% block content %}
+<main class="page upload-page">
+    <div class="upload-layout">
+        <section class="drop-panel">
+            {% if mode == 'edit' and image %}
+                <img class="preview-image" src="{{ image.image.url }}" alt="preview">
+            {% endif %}
+            <div id="drop-zone" class="drop-zone">
+                <p class="drop-big">Drop image here</p>
+                <p>JPG, PNG, WEBP</p>
+                <button type="button" class="btn" id="pick-file">Seleccionar archivo</button>
+            </div>
+        </section>
+
+        <section class="meta-panel">
+            <form method="post" enctype="multipart/form-data" class="form-grid" id="upload-form">
+                {% csrf_token %}
+                {{ form.image.as_widget(attrs={'id': 'id_image_file'}) }}
+                <label>Titulo (opcional)</label>
+                {{ form.title }}
+                <label>Descripcion (opcional)</label>
+                {{ form.description }}
+
+                <div class="js-tag-editor">
+                    <label>Tags</label>
+                    {{ form.tags_text.as_hidden }}
+                    <div class="chip-input-wrap">
+                        <div class="tag-chips js-tags-chips"></div>
+                        <input class="js-tags-input" type="text" placeholder="Add tag and press Enter" autocomplete="off">
+                    </div>
+                    <datalist id="tag-suggestions-upload" class="js-tags-suggestions">
+                        {% for tag_name in tag_names %}
+                            <option value="{{ tag_name }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <div class="detail-actions">
+                    <button class="btn" type="submit">{% if mode == 'edit' %}Guardar cambios{% else %}Publicar{% endif %}</button>
+                    <a class="btn btn-light" href="{% if mode == 'edit' and image %}{% url 'gallery:detail' image.id %}{% else %}{% url 'gallery:home' %}{% endif %}">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+{% endblock %}

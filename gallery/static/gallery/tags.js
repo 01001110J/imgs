@@ -4,14 +4,13 @@
     }
 
     function initTagInput(container) {
-        if (!container) return;
-
-        var hiddenInput = container.querySelector(".js-tags-hidden");
+        var hiddenInput = container.querySelector('input[name="tags_text"]');
         var textInput = container.querySelector(".js-tags-input");
         var chipsWrap = container.querySelector(".js-tags-chips");
         var suggestions = container.querySelector(".js-tags-suggestions");
-
         if (!hiddenInput || !textInput || !chipsWrap) return;
+
+        hiddenInput.classList.add("js-tags-hidden");
 
         var tags = [];
 
@@ -30,7 +29,6 @@
                 removeBtn.type = "button";
                 removeBtn.className = "tag-chip-remove";
                 removeBtn.textContent = "x";
-                removeBtn.setAttribute("aria-label", "Quitar etiqueta " + tag);
                 removeBtn.addEventListener("click", function () {
                     tags = tags.filter(function (t) { return t !== tag; });
                     renderChips();
@@ -44,31 +42,26 @@
 
         function addTag(raw) {
             var tag = normalizeTag(raw);
-            if (!tag) return;
-            if (!tags.includes(tag)) {
+            if (tag && !tags.includes(tag)) {
                 tags.push(tag);
                 renderChips();
                 syncHidden();
             }
         }
 
-        function loadInitialTags() {
-            var initial = hiddenInput.value || "";
-            initial.split(",").forEach(function (value) {
-                var tag = normalizeTag(value);
-                if (tag && !tags.includes(tag)) tags.push(tag);
-            });
-            renderChips();
-            syncHidden();
-        }
+        (hiddenInput.value || "").split(",").forEach(function (value) {
+            var tag = normalizeTag(value);
+            if (tag && !tags.includes(tag)) tags.push(tag);
+        });
+        renderChips();
+        syncHidden();
 
         textInput.addEventListener("keydown", function (event) {
             if (event.key === "Enter" || event.key === ",") {
                 event.preventDefault();
                 addTag(textInput.value);
                 textInput.value = "";
-            }
-            if (event.key === "Backspace" && !textInput.value && tags.length > 0) {
+            } else if (event.key === "Backspace" && !textInput.value && tags.length) {
                 tags.pop();
                 renderChips();
                 syncHidden();
@@ -96,12 +89,9 @@
                 syncHidden();
             });
         }
-
-        loadInitialTags();
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-        var tagEditors = document.querySelectorAll(".js-tag-editor");
-        tagEditors.forEach(initTagInput);
+        document.querySelectorAll(".js-tag-editor").forEach(initTagInput);
     });
 })();

@@ -1,0 +1,26 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<main class="page home-page">
+    <section class="tags-row">
+        <a class="tag-pill {% if not active_tag %}is-active{% endif %}" href="{% url 'gallery:home' %}{% if query %}?q={{ query|urlencode }}{% endif %}">All</a>
+        {% for tag in tags %}
+            <a class="tag-pill {% if active_tag and active_tag.id == tag.id %}is-active{% endif %}" href="{% url 'gallery:home' %}?{% if query %}q={{ query|urlencode }}&{% endif %}tag={{ tag.id }}">{{ tag.name }}</a>
+        {% endfor %}
+    </section>
+
+    <section class="masonry-grid">
+        {% for image in images %}
+            <a class="visual-card" href="{% url 'gallery:detail' image.id %}">
+                <img src="{{ image.image.url }}" alt="{{ image.title|default:'imagen' }}" draggable="true" data-drag-url="{{ image.image.url }}">
+            </a>
+        {% empty %}
+            <p class="empty-note">No hay imagenes para mostrar.</p>
+        {% endfor %}
+    </section>
+
+    <a class="floating-create" href="{% url 'gallery:upload' %}">+ Crear</a>
+</main>
+{% endblock %}

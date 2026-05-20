@@ -12,7 +12,7 @@ class Tag(models.Model):
 
 
 class ImageItem(models.Model):
-    title = models.CharField(max_length=120)
+    title = models.CharField(max_length=120, blank=True, default="")
     description = models.TextField(blank=True)
     image = models.FileField(upload_to="gallery/")
     tags = models.ManyToManyField(Tag, related_name="images", blank=True)

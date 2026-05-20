@@ -4,36 +4,29 @@ from .models import ImageItem, Tag
 
 
 class ImageItemForm(forms.ModelForm):
-    tags_text = forms.CharField(
-        required=False,
-        label="Etiquetas",
-        help_text="Separa etiquetas por coma. Ej: playa, familia, vacaciones",
-        widget=forms.TextInput(
-            attrs={
-                "placeholder": "playa, familia, vacaciones",
-                "list": "tag-suggestions",
-                "autocomplete": "off",
-            }
-        ),
-    )
+    tags_text = forms.CharField(required=False, label="Tags")
 
     class Meta:
         model = ImageItem
         fields = ["title", "description", "image", "tags_text"]
         labels = {
-            "title": "Titulo",
-            "description": "Descripcion",
+            "title": "Titulo (opcional)",
+            "description": "Descripcion (opcional)",
             "image": "Imagen",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["title"].required = False
         self.fields["image"].required = False
 
         if self.instance and self.instance.pk:
             self.fields["tags_text"].initial = ", ".join(
                 self.instance.tags.order_by("name").values_list("name", flat=True)
             )
+
+    def clean_title(self):
+        return (self.cleaned_data.get("title") or "").strip()
 
     def save(self, commit=True):
         item = super().save(commit=commit)
