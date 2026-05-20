@@ -1,0 +1,101 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeria con Etiquetas</title>
+    <link rel="stylesheet" href="{% static 'gallery/styles.css' %}">
+</head>
+<body>
+    <main class="container">
+        <h1>Galeria de Imagenes</h1>
+
+        <section class="card">
+            <h2>Subir imagen</h2>
+            <form method="post" enctype="multipart/form-data" class="form-grid">
+                {% csrf_token %}
+
+                <p>{{ form.title.label_tag }} {{ form.title }}</p>
+                <p>{{ form.description.label_tag }} {{ form.description }}</p>
+                <p>{{ form.image.label_tag }} {{ form.image }}</p>
+
+                <div class="js-tag-editor">
+                    <label for="tag-input-create">Etiquetas</label>
+                    {{ form.tags_text.as_hidden }}
+                    <div class="chip-input-wrap">
+                        <div class="tag-chips js-tags-chips"></div>
+                        <input id="tag-input-create" class="js-tags-input" type="text" placeholder="Escribe y presiona Enter" autocomplete="off">
+                    </div>
+                    <small>Separa por coma o Enter. Puedes elegir sugerencias.</small>
+                    <datalist id="tag-suggestions-create" class="js-tags-suggestions">
+                        {% for tag_name in tag_names %}
+                            <option value="{{ tag_name }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <button type="submit">Guardar imagen</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Busqueda y filtros</h2>
+            <form method="get" class="filter-form">
+                <label for="q">Buscar por texto</label>
+                <input id="q" name="q" type="text" value="{{ query }}" placeholder="titulo, descripcion o etiqueta">
+
+                <p class="label">Filtrar por una o varias etiquetas</p>
+                <div class="tags-wrap">
+                    {% for tag in tags %}
+                        <label class="tag-item">
+                            <input type="checkbox" name="tags" value="{{ tag.id }}" {% if tag.id|stringformat:"s" in selected_tag_ids %}checked{% endif %}>
+                            <span>{{ tag.name }}</span>
+                        </label>
+                    {% empty %}
+                        <p>No hay etiquetas aun.</p>
+                    {% endfor %}
+                </div>
+
+                <div class="actions">
+                    <button type="submit">Aplicar filtros</button>
+                    <a href="/">Limpiar</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="gallery-grid">
+            {% for image in images %}
+                <article class="image-card">
+                    <img src="{{ image.image.url }}" alt="{{ image.title }}">
+                    <div class="content">
+                        <h3>{{ image.title }}</h3>
+                        <p>{{ image.description|default:"Sin descripcion" }}</p>
+                        <div class="chips">
+                            {% for tag in image.tags.all %}
+                                <span>#{{ tag.name }}</span>
+                            {% empty %}
+                                <span class="muted">Sin etiquetas</span>
+                            {% endfor %}
+                        </div>
+                        <div class="card-actions">
+                            <a class="btn-secondary" href="{% url 'gallery:edit' image.id %}">Editar</a>
+                            <form method="post" action="{% url 'gallery:delete' image.id %}" onsubmit="return confirm('¿Eliminar esta imagen?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-danger">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            {% empty %}
+                <p class="empty">No hay imagenes que coincidan con el filtro.</p>
+            {% endfor %}
+        </section>
+    </main>
+    <script src="{% static 'gallery/tags.js' %}"></script>
+    <script>
+        document.querySelector("#id_tags_text")?.classList.add("js-tags-hidden");
+        document.querySelector(".js-tags-suggestions")?.setAttribute("id", "tag-suggestions-create");
+    </script>
+</body>
+</html>

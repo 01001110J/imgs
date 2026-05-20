@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar imagen</title>
+    <link rel="stylesheet" href="{% static 'gallery/styles.css' %}">
+</head>
+<body>
+    <main class="container narrow">
+        <section class="card">
+            <h1>Editar imagen</h1>
+            <img class="preview" src="{{ image.image.url }}" alt="{{ image.title }}">
+            <form method="post" enctype="multipart/form-data" class="form-grid">
+                {% csrf_token %}
+
+                <p>{{ form.title.label_tag }} {{ form.title }}</p>
+                <p>{{ form.description.label_tag }} {{ form.description }}</p>
+                <p>{{ form.image.label_tag }} {{ form.image }}</p>
+
+                <div class="js-tag-editor">
+                    <label for="tag-input-edit">Etiquetas</label>
+                    {{ form.tags_text.as_hidden }}
+                    <div class="chip-input-wrap">
+                        <div class="tag-chips js-tags-chips"></div>
+                        <input id="tag-input-edit" class="js-tags-input" type="text" placeholder="Escribe y presiona Enter" autocomplete="off">
+                    </div>
+                    <small>Separa por coma o Enter. Puedes elegir sugerencias.</small>
+                    <datalist id="tag-suggestions-edit" class="js-tags-suggestions">
+                        {% for tag_name in tag_names %}
+                            <option value="{{ tag_name }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <div class="actions">
+                    <button type="submit">Guardar cambios</button>
+                    <a href="{% url 'gallery:index' %}">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+    <script src="{% static 'gallery/tags.js' %}"></script>
+    <script>
+        document.querySelector("#id_tags_text")?.classList.add("js-tags-hidden");
+        document.querySelector(".js-tags-suggestions")?.setAttribute("id", "tag-suggestions-edit");
+    </script>
+</body>
+</html>
