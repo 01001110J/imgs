@@ -19,7 +19,7 @@
         <section class="meta-panel">
             <form method="post" enctype="multipart/form-data" class="form-grid" id="upload-form">
                 {% csrf_token %}
-                {{ form.image.as_widget(attrs={'id': 'id_image_file'}) }}
+                {{ form.image }}
                 <label>Titulo (opcional)</label>
                 {{ form.title }}
                 <label>Descripcion (opcional)</label>

@@ -19,6 +19,12 @@ class ImageItemForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["title"].required = False
         self.fields["image"].required = False
+        self.fields["image"].widget.attrs.update(
+            {
+                "id": "id_image_file",
+                "class": "native-file-input",
+            }
+        )
 
         if self.instance and self.instance.pk:
             self.fields["tags_text"].initial = ", ".join(

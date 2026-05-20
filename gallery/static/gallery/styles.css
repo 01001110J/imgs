@@ -68,7 +68,7 @@ body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg); co
 .drop-zone.is-dragover { background: #fceef3; border-color: #d94b77; }
 .drop-big { font-size: 34px; margin: 0; color: #1d1530; }
 
-#id_image_file { display: none; }
+.native-file-input { display: none; }
 .form-grid { display: grid; gap: 10px; }
 .form-grid input[type="text"], .form-grid textarea {
     border: none; border-radius: 12px; background: #e7e9f2; padding: 12px;

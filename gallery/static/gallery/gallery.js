@@ -37,6 +37,14 @@
         var file = event.dataTransfer.files && event.dataTransfer.files[0];
         if (file) attachFile(file);
     });
+
+    fileInput.addEventListener("change", function () {
+        var file = fileInput.files && fileInput.files[0];
+        if (file) {
+            var text = dropZone.querySelector(".drop-big");
+            if (text) text.textContent = file.name;
+        }
+    });
 })();
 
 (function () {
