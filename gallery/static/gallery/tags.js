@@ -49,6 +49,12 @@
             }
         }
 
+        container.addEventListener("click", function (event) {
+            var button = event.target.closest(".js-add-tag");
+            if (!button) return;
+            addTag(button.getAttribute("data-tag") || "");
+        });
+
         (hiddenInput.value || "").split(",").forEach(function (value) {
             var tag = normalizeTag(value);
             if (tag && !tags.includes(tag)) tags.push(tag);
@@ -87,6 +93,18 @@
                     textInput.value = "";
                 }
                 syncHidden();
+            });
+        }
+
+        var filterInput = container.querySelector(".js-tag-filter");
+        var allTagButtons = container.querySelectorAll(".js-all-tags-list .js-add-tag");
+        if (filterInput && allTagButtons.length) {
+            filterInput.addEventListener("input", function () {
+                var q = normalizeTag(filterInput.value);
+                allTagButtons.forEach(function (btn) {
+                    var name = normalizeTag(btn.getAttribute("data-tag") || "");
+                    btn.style.display = !q || name.includes(q) ? "" : "none";
+                });
             });
         }
     }

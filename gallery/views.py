@@ -64,6 +64,8 @@ def upload_view(request):
     context = {
         "form": form,
         "tag_names": Tag.objects.values_list("name", flat=True),
+        "popular_tags": Tag.objects.annotate(total=Count("images")).order_by("-total", "name")[:12],
+        "all_tags": Tag.objects.annotate(total=Count("images")).order_by("name"),
         "mode": "create",
     }
     return render(request, "gallery/upload.html", context)
@@ -84,6 +86,8 @@ def edit_image_view(request, image_id):
         "form": form,
         "image": image,
         "tag_names": Tag.objects.values_list("name", flat=True),
+        "popular_tags": Tag.objects.annotate(total=Count("images")).order_by("-total", "name")[:12],
+        "all_tags": Tag.objects.annotate(total=Count("images")).order_by("name"),
         "mode": "edit",
     }
     return render(request, "gallery/upload.html", context)

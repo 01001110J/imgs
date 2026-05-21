@@ -59,3 +59,42 @@
         });
     });
 })();
+
+(function () {
+    async function copyImage(url, button) {
+        var absolute = new URL(url, window.location.origin).toString();
+        try {
+            var response = await fetch(absolute, { credentials: "same-origin" });
+            var blob = await response.blob();
+
+            if (navigator.clipboard && window.ClipboardItem) {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type || "image/png"]: blob })
+                ]);
+                button.textContent = "Copied";
+            } else {
+                await navigator.clipboard.writeText(absolute);
+                button.textContent = "URL Copied";
+            }
+        } catch (error) {
+            try {
+                await navigator.clipboard.writeText(absolute);
+                button.textContent = "URL Copied";
+            } catch (_) {
+                button.textContent = "Failed";
+            }
+        }
+
+        setTimeout(function () {
+            button.textContent = "Copy";
+        }, 1200);
+    }
+
+    document.addEventListener("click", function (event) {
+        var button = event.target.closest(".copy-image-btn");
+        if (!button) return;
+        event.preventDefault();
+        event.stopPropagation();
+        copyImage(button.getAttribute("data-copy-image"), button);
+    });
+})();

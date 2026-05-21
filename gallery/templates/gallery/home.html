@@ -13,9 +13,12 @@
 
     <section class="masonry-grid">
         {% for image in images %}
-            <a class="visual-card" href="{% url 'gallery:detail' image.id %}">
-                <img src="{{ image.image.url }}" alt="{{ image.title|default:'imagen' }}" draggable="true" data-drag-url="{{ image.image.url }}">
-            </a>
+            <div class="visual-card">
+                <a href="{% url 'gallery:detail' image.id %}">
+                    <img src="{{ image.image.url }}" alt="{{ image.title|default:'imagen' }}" draggable="true" data-drag-url="{{ image.image.url }}">
+                </a>
+                <button type="button" class="copy-image-btn" data-copy-image="{{ image.image.url }}">Copy</button>
+            </div>
         {% empty %}
             <p class="empty-note">No hay imagenes para mostrar.</p>
         {% endfor %}

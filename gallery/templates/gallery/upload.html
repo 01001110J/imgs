@@ -32,6 +32,22 @@
                         <div class="tag-chips js-tags-chips"></div>
                         <input class="js-tags-input" type="text" placeholder="Add tag and press Enter" autocomplete="off">
                     </div>
+                    <div class="tag-picker">
+                        <p class="tag-section-title">Most used tags</p>
+                        <div class="tag-button-list">
+                            {% for tag in popular_tags %}
+                                <button type="button" class="tag-suggestion-btn js-add-tag" data-tag="{{ tag.name }}">{{ tag.name }} ({{ tag.total }})</button>
+                            {% empty %}
+                                <span class="empty-note">No tags yet.</span>
+                            {% endfor %}
+                        </div>
+                        <input type="text" class="tag-filter-input js-tag-filter" placeholder="Search other tags...">
+                        <div class="tag-button-list js-all-tags-list">
+                            {% for tag in all_tags %}
+                                <button type="button" class="tag-suggestion-btn js-add-tag" data-tag="{{ tag.name }}">{{ tag.name }}</button>
+                            {% endfor %}
+                        </div>
+                    </div>
                     <datalist id="tag-suggestions-upload" class="js-tags-suggestions">
                         {% for tag_name in tag_names %}
                             <option value="{{ tag_name }}"></option>
