@@ -11,7 +11,43 @@
 * { box-sizing: border-box; }
 body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
 
-.topbar { padding: 16px 32px 0; }
+.topbar {
+    padding: 16px 32px 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 14px;
+}
+
+.brand-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #d7d9e4;
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+}
+
+.logo-mark {
+    width: 20px;
+    height: 16px;
+    border: 2px solid #be003a;
+    border-radius: 4px;
+    position: relative;
+}
+
+.logo-mark::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #be003a;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+}
 .search-wrap input {
     width: min(920px, 100%);
     margin: 0 auto;
@@ -39,6 +75,19 @@ body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg); co
 .floating-create {
     position: fixed; right: 28px; bottom: 24px; background: #ea114f; color: #fff;
     text-decoration: none; padding: 14px 24px; border-radius: 999px; font-weight: 700;
+}
+
+.global-upload-btn {
+    position: fixed;
+    right: 28px;
+    bottom: 24px;
+    z-index: 20;
+    background: #ea114f;
+    color: #fff;
+    text-decoration: none;
+    padding: 14px 24px;
+    border-radius: 999px;
+    font-weight: 700;
 }
 
 .detail-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; align-items: start; }
@@ -94,4 +143,5 @@ body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg); co
     .topbar { padding: 12px 14px 0; }
     .page { padding: 16px 14px 90px; }
     .masonry-grid, .masonry-grid.three-col { column-count: 1; }
+    .global-upload-btn { right: 14px; bottom: 14px; }
 }

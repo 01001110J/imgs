@@ -1,0 +1,200 @@
+[
+  {
+    "model": "gallery.tag",
+    "pk": 1,
+    "fields": {
+      "name": "abstract"
+    }
+  },
+  {
+    "model": "gallery.tag",
+    "pk": 2,
+    "fields": {
+      "name": "interior"
+    }
+  },
+  {
+    "model": "gallery.tag",
+    "pk": 3,
+    "fields": {
+      "name": "minimalism"
+    }
+  },
+  {
+    "model": "gallery.tag",
+    "pk": 4,
+    "fields": {
+      "name": "architecture"
+    }
+  },
+  {
+    "model": "gallery.tag",
+    "pk": 5,
+    "fields": {
+      "name": "lighting"
+    }
+  },
+  {
+    "model": "gallery.tag",
+    "pk": 6,
+    "fields": {
+      "name": "product"
+    }
+  },
+  {
+    "model": "gallery.imageitem",
+    "pk": 1,
+    "fields": {
+      "title": "Floral Composition",
+      "description": "Seed image for testing cards and filtering.",
+      "image": "sample_images/DPlayer - 2026-04-03T205303.824.png",
+      "created_at": "2026-05-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "gallery.imageitem",
+    "pk": 2,
+    "fields": {
+      "title": "Interior Setup",
+      "description": "Seed image with interior style.",
+      "image": "sample_images/DPlayer - 2026-04-03T205330.384.png",
+      "created_at": "2026-05-20T10:05:00Z"
+    }
+  },
+  {
+    "model": "gallery.imageitem",
+    "pk": 3,
+    "fields": {
+      "title": "Minimal Poster",
+      "description": "Seed image with minimal and abstract look.",
+      "image": "sample_images/DPlayer - 2026-04-03T205414.519.png",
+      "created_at": "2026-05-20T10:10:00Z"
+    }
+  },
+  {
+    "model": "gallery.imageitem",
+    "pk": 4,
+    "fields": {
+      "title": "Liquid Splash",
+      "description": "Seed image for vivid contrast testing.",
+      "image": "sample_images/DPlayer - 2026-04-03T205430.182.png",
+      "created_at": "2026-05-20T10:15:00Z"
+    }
+  },
+  {
+    "model": "gallery.imageitem",
+    "pk": 5,
+    "fields": {
+      "title": "Architectural Blue",
+      "description": "Seed image for architecture and minimal filters.",
+      "image": "sample_images/DPlayer - 2026-04-03T205446.205.png",
+      "created_at": "2026-05-20T10:20:00Z"
+    }
+  },
+  {
+    "model": "gallery.imageitem",
+    "pk": 6,
+    "fields": {
+      "title": "Warm Lamp Scene",
+      "description": "Seed image for lighting and interior groups.",
+      "image": "sample_images/DPlayer - 2026-04-03T205524.487.png",
+      "created_at": "2026-05-20T10:25:00Z"
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 1,
+    "fields": {
+      "imageitem": 1,
+      "tag": 1
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 2,
+    "fields": {
+      "imageitem": 1,
+      "tag": 3
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 3,
+    "fields": {
+      "imageitem": 2,
+      "tag": 2
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 4,
+    "fields": {
+      "imageitem": 2,
+      "tag": 3
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 5,
+    "fields": {
+      "imageitem": 3,
+      "tag": 1
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 6,
+    "fields": {
+      "imageitem": 3,
+      "tag": 6
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 7,
+    "fields": {
+      "imageitem": 4,
+      "tag": 1
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 8,
+    "fields": {
+      "imageitem": 4,
+      "tag": 6
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 9,
+    "fields": {
+      "imageitem": 5,
+      "tag": 4
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 10,
+    "fields": {
+      "imageitem": 5,
+      "tag": 3
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 11,
+    "fields": {
+      "imageitem": 6,
+      "tag": 5
+    }
+  },
+  {
+    "model": "gallery.imageitem_tags",
+    "pk": 12,
+    "fields": {
+      "imageitem": 6,
+      "tag": 2
+    }
+  }
+]

@@ -9,11 +9,15 @@
 </head>
 <body>
     <header class="topbar">
+        <a class="brand-logo" href="{% url 'gallery:home' %}" aria-label="Go to home">
+            <span class="logo-mark"></span>
+        </a>
         <form method="get" action="{% url 'gallery:home' %}" class="search-wrap">
             <input name="q" type="text" value="{{ query|default:'' }}" placeholder="Search for inspiration...">
         </form>
     </header>
     {% block content %}{% endblock %}
+    <a class="global-upload-btn" href="{% url 'gallery:upload' %}">+ Upload Image</a>
     <script src="{% static 'gallery/tags.js' %}"></script>
     <script src="{% static 'gallery/gallery.js' %}"></script>
 </body>
