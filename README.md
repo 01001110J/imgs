@@ -23,19 +23,19 @@ A Django gallery app to upload images, tag them, search by text, filter by tags,
 ```powershell
 python -m venv env
 .\env\Scripts\Activate.ps1
-pip install django
+pip install -r requirements.txt
 ```
 
 2. Apply migrations:
 
 ```powershell
-.\env\Scripts\python.exe manage.py migrate
+python manage.py migrate
 ```
 
 3. Start the development server:
 
 ```powershell
-.\env\Scripts\python.exe manage.py runserver
+python manage.py runserver
 ```
 
 4. Open:
@@ -54,7 +54,7 @@ This repository includes:
 Load dummy data:
 
 ```powershell
-.\env\Scripts\python.exe manage.py loaddata gallery/fixtures/initial_data.json
+python manage.py loaddata gallery/fixtures/initial_data.json
 ```
 
 The fixture references real files from `sample_images` by filename
@@ -68,14 +68,14 @@ For a clean reset:
 
 ```powershell
 Remove-Item db.sqlite3
-.\env\Scripts\python.exe manage.py migrate
-.\env\Scripts\python.exe manage.py loaddata gallery/fixtures/initial_data.json
+python manage.py migrate
+python manage.py loaddata gallery/fixtures/initial_data.json
 ```
 
 Then run:
 
 ```powershell
-.\env\Scripts\python.exe manage.py runserver
+python manage.py runserver
 ```
 
 ## Notes
