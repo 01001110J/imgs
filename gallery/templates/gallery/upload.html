@@ -4,6 +4,9 @@
 
 {% block content %}
 <main class="page upload-page">
+    <div class="bulk-top-actions">
+        <a class="btn btn-light" href="{% url 'gallery:bulk_upload' %}">Bulk Upload</a>
+    </div>
     <div class="upload-layout">
         <section class="drop-panel">
             {% if mode == 'edit' and image %}

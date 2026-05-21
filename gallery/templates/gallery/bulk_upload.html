@@ -1,0 +1,77 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}Bulk Upload{% endblock %}
+
+{% block content %}
+<main class="page upload-page">
+    <div class="bulk-top-actions">
+        <a class="btn btn-light" href="{% url 'gallery:upload' %}">Single Upload</a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="bulk-upload-form">
+        {% csrf_token %}
+        <section class="drop-panel">
+            <input id="bulk-images-input" name="images" type="file" accept="image/*" multiple class="native-file-input">
+            <div id="bulk-drop-zone" class="drop-zone">
+                <p class="drop-big">Drop many images here</p>
+                <p>JPG, PNG, WEBP - multiple files supported</p>
+                <button type="button" class="btn" id="bulk-pick-file">Select files</button>
+            </div>
+        </section>
+
+        <div id="bulk-hidden-fields"></div>
+    </form>
+
+    <div id="bulk-modal" class="bulk-modal" aria-hidden="true">
+        <div class="bulk-modal-card">
+            <div class="bulk-modal-head">
+                <h2>Catalog image</h2>
+                <p id="bulk-step-label">1 / 1</p>
+            </div>
+
+            <div class="bulk-modal-grid">
+                <div>
+                    <img id="bulk-current-preview" class="bulk-current-preview" src="" alt="Current image preview">
+                </div>
+
+                <div class="bulk-fields">
+                    <label>Title (optional)</label>
+                    <input type="text" id="bulk-title-input" placeholder="Title">
+
+                    <label>Description (optional)</label>
+                    <textarea id="bulk-description-input" placeholder="Description"></textarea>
+
+                    <div class="js-bulk-tag-editor" id="bulk-tag-editor">
+                        <label>Tags</label>
+                        <div class="chip-input-wrap">
+                            <div class="tag-chips js-bulk-tag-chips"></div>
+                            <input type="text" class="js-bulk-tags-input" placeholder="Add tag and press Enter" autocomplete="off">
+                        </div>
+                        <div class="tag-picker">
+                            <p class="tag-section-title">Most used tags</p>
+                            <div class="tag-button-list js-bulk-popular-list">
+                                {% for tag in popular_tags %}
+                                    <button type="button" class="tag-suggestion-btn js-bulk-add-tag" data-tag="{{ tag.name }}">{{ tag.name }} ({{ tag.total }})</button>
+                                {% endfor %}
+                            </div>
+                            <input type="text" class="tag-filter-input js-bulk-tag-filter" placeholder="Search other tags...">
+                            <div class="tag-button-list js-bulk-all-tags-list">
+                                {% for tag in all_tags %}
+                                    <button type="button" class="tag-suggestion-btn js-bulk-add-tag" data-tag="{{ tag.name }}">{{ tag.name }}</button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bulk-modal-actions">
+                <button type="button" id="bulk-prev-btn" class="btn btn-light">Back</button>
+                <button type="button" id="bulk-next-btn" class="btn">Next</button>
+                <button type="button" id="bulk-finish-btn" class="btn">Finish</button>
+                <button type="button" id="bulk-cancel-btn" class="btn btn-light">Cancel</button>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

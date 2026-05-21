@@ -6,6 +6,15 @@ from .forms import ImageItemForm
 from .models import ImageItem, Tag
 
 
+def _apply_tags(image, tags_raw):
+    tag_names = [name.strip().lower() for name in (tags_raw or "").split(",") if name.strip()]
+    tags = []
+    for tag_name in tag_names:
+        tag, _ = Tag.objects.get_or_create(name=tag_name)
+        tags.append(tag)
+    image.tags.set(tags)
+
+
 def home_view(request):
     query = request.GET.get("q", "").strip()
     selected_tag_id = request.GET.get("tag", "").strip()
@@ -91,6 +100,34 @@ def edit_image_view(request, image_id):
         "mode": "edit",
     }
     return render(request, "gallery/upload.html", context)
+
+
+def bulk_upload_view(request):
+    if request.method == "POST":
+        files = request.FILES.getlist("images")
+        titles = request.POST.getlist("titles[]")
+        descriptions = request.POST.getlist("descriptions[]")
+        tags_list = request.POST.getlist("tags[]")
+
+        created_ids = []
+        for index, file in enumerate(files):
+            title = (titles[index] if index < len(titles) else "").strip()
+            description = (descriptions[index] if index < len(descriptions) else "").strip()
+            tags_raw = tags_list[index] if index < len(tags_list) else ""
+
+            image = ImageItem.objects.create(title=title, description=description, image=file)
+            _apply_tags(image, tags_raw)
+            created_ids.append(image.id)
+
+        if created_ids:
+            return redirect("gallery:detail", image_id=created_ids[-1])
+        return redirect("gallery:bulk_upload")
+
+    context = {
+        "popular_tags": Tag.objects.annotate(total=Count("images")).order_by("-total", "name")[:12],
+        "all_tags": Tag.objects.annotate(total=Count("images")).order_by("name"),
+    }
+    return render(request, "gallery/bulk_upload.html", context)
 
 
 @require_POST
