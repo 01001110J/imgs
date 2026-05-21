@@ -3,26 +3,80 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<main class="page home-page">
-    <section class="tags-row">
-        <a class="tag-pill {% if not active_tag %}is-active{% endif %}" href="{% url 'gallery:home' %}{% if query %}?q={{ query|urlencode }}{% endif %}">All</a>
-        {% for tag in tags %}
-            <a class="tag-pill {% if active_tag and active_tag.id == tag.id %}is-active{% endif %}" href="{% url 'gallery:home' %}?{% if query %}q={{ query|urlencode }}&{% endif %}tag={{ tag.id }}">{{ tag.name }}</a>
-        {% endfor %}
-    </section>
+<main class="page home-layout">
+    <aside class="sidebar" id="filter-sidebar">
+        <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        <div class="sidebar-header">
+            <strong>Basic Drawer</strong>
+            <button type="button" class="sidebar-toggle" id="sidebar-toggle">Toggle Filters</button>
+        </div>
+
+        <form method="get" action="{% url 'gallery:home' %}" class="sidebar-form">
+            <label class="small-label" for="tag-search">Search tags</label>
+            <input id="tag-search" type="text" class="tag-filter-input" placeholder="filter tags">
+
+            <p class="small-label">Selected tags</p>
+            <div class="tag-chips selected-tags-box" id="selected-tags-box">
+                {% for tag in selected_tags %}
+                    <span class="tag-chip selected-tag-chip">
+                        {{ tag.name }}
+                        <button type="button" class="tag-chip-remove js-remove-selected-tag" data-tag-id="{{ tag.id }}">x</button>
+                    </span>
+                {% empty %}
+                    <span class="empty-note">No selected tags</span>
+                {% endfor %}
+            </div>
+
+            <p class="small-label">All tags</p>
+            <div class="tags-list" id="sidebar-tags-list">
+                {% for tag in tags %}
+                    <label class="tag-item-row" data-tag-name="{{ tag.name|lower }}">
+                        <input type="checkbox" name="tags" value="{{ tag.id }}" {% if tag.id|stringformat:"s" in selected_tag_ids %}checked{% endif %}>
+                        <span>{{ tag.name }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+
+            <input type="hidden" name="q" value="{{ query|default:'' }}">
+            <div class="detail-actions">
+                <button class="btn" type="submit">Apply Filters</button>
+                <a class="btn btn-light" href="{% url 'gallery:home' %}">Clear</a>
+            </div>
+        </form>
+    </aside>
 
     <section class="masonry-grid">
         {% for image in images %}
             <div class="visual-card">
-                <a href="{% url 'gallery:detail' image.id %}">
-                    <img src="{{ image.image.url }}" alt="{{ image.title|default:'imagen' }}" draggable="true" data-drag-url="{{ image.image.url }}">
-                </a>
+                <button type="button" class="open-modal-btn" data-image-id="{{ image.id }}">
+                    <img src="{{ image.image.url }}" alt="image" draggable="true" data-drag-url="{{ image.image.url }}">
+                </button>
                 <button type="button" class="copy-image-btn" data-copy-image="{{ image.image.url }}">Copy</button>
             </div>
         {% empty %}
-            <p class="empty-note">No hay imagenes para mostrar.</p>
+            <p class="empty-note">No images found.</p>
         {% endfor %}
     </section>
-
 </main>
+
+<div class="image-modal" id="image-modal" aria-hidden="true">
+    <div class="image-modal-content" id="image-modal-content">
+        <button type="button" class="image-modal-close" id="image-modal-close">x</button>
+        <div class="image-modal-grid">
+            <div class="modal-image-wrap">
+                <img id="modal-main-image" class="image-modal-main" src="" alt="modal image">
+                <button type="button" id="modal-copy-btn" class="modal-overlay-btn modal-copy-btn">Copy</button>
+                <a href="#" id="modal-edit-btn" class="modal-overlay-btn modal-edit-btn">Edit</a>
+            </div>
+            <div class="modal-side-scroll" id="modal-side-scroll">
+                <p id="modal-description"></p>
+                <div id="modal-tags" class="chips"></div>
+                <h3>Recommendations</h3>
+                <div id="modal-recommendations" class="masonry-grid three-col"></div>
+                <p id="modal-loading" class="empty-note" style="display:none;">Loading...</p>
+                <div id="modal-recommendations-sentinel"></div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

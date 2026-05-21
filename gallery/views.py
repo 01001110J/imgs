@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -15,9 +16,27 @@ def _apply_tags(image, tags_raw):
     image.tags.set(tags)
 
 
+def _similar_images_qs(image, limit=None):
+    tag_ids = list(image.tags.values_list("id", flat=True))
+    qs = (
+        ImageItem.objects.exclude(id=image.id)
+        .filter(tags__id__in=tag_ids)
+        .annotate(shared_tags=Count("tags", filter=Q(tags__id__in=tag_ids)))
+        .order_by("-shared_tags", "-created_at")
+        .distinct()
+    )
+    if limit is not None:
+        return qs[:limit]
+    return qs
+
+
 def home_view(request):
     query = request.GET.get("q", "").strip()
-    selected_tag_id = request.GET.get("tag", "").strip()
+    selected_tag_ids = list(request.GET.getlist("tags"))
+    legacy_tag = request.GET.get("tag", "").strip()
+    if legacy_tag:
+        selected_tag_ids.append(legacy_tag)
+    selected_tag_ids = [str(t) for t in selected_tag_ids if str(t).strip()]
 
     images = ImageItem.objects.prefetch_related("tags").all()
     if query:
@@ -27,38 +46,65 @@ def home_view(request):
             | Q(tags__name__icontains=query)
         ).distinct()
 
-    active_tag = None
-    if selected_tag_id:
-        active_tag = Tag.objects.filter(id=selected_tag_id).first()
-        if active_tag:
-            images = images.filter(tags=active_tag)
+    selected_tags = list(Tag.objects.filter(id__in=selected_tag_ids))
+    for tag in selected_tags:
+        images = images.filter(tags=tag)
 
     context = {
         "images": images,
         "tags": Tag.objects.all(),
         "query": query,
-        "active_tag": active_tag,
+        "selected_tag_ids": {str(tag.id) for tag in selected_tags},
+        "selected_tags": selected_tags,
     }
     return render(request, "gallery/home.html", context)
 
 
 def image_detail_view(request, image_id):
     image = get_object_or_404(ImageItem.objects.prefetch_related("tags"), id=image_id)
-    tag_ids = list(image.tags.values_list("id", flat=True))
-
-    similar_images = (
-        ImageItem.objects.exclude(id=image.id)
-        .filter(tags__id__in=tag_ids)
-        .annotate(shared_tags=Count("tags", filter=Q(tags__id__in=tag_ids)))
-        .order_by("-shared_tags", "-created_at")
-        .distinct()[:8]
-    )
+    similar_images = _similar_images_qs(image, limit=8)
 
     context = {
         "image": image,
         "similar_images": similar_images,
     }
     return render(request, "gallery/detail.html", context)
+
+
+def image_modal_data_view(request, image_id):
+    image = get_object_or_404(ImageItem.objects.prefetch_related("tags"), id=image_id)
+    try:
+        offset = int(request.GET.get("offset", "0"))
+    except ValueError:
+        offset = 0
+    try:
+        limit = int(request.GET.get("limit", "12"))
+    except ValueError:
+        limit = 12
+    offset = max(offset, 0)
+    limit = min(max(limit, 1), 40)
+
+    base_qs = _similar_images_qs(image, limit=None)
+    similar_images = list(base_qs[offset : offset + limit])
+    total_similar = base_qs.count()
+    return JsonResponse(
+        {
+            "id": image.id,
+            "image_url": image.image.url,
+            "description": image.description or "",
+            "tags": [{"id": tag.id, "name": tag.name} for tag in image.tags.all()],
+            "similar": [
+                {
+                    "id": item.id,
+                    "image_url": item.image.url,
+                    "description": item.description or "",
+                }
+                for item in similar_images
+            ],
+            "has_more": (offset + len(similar_images)) < total_similar,
+            "next_offset": offset + len(similar_images),
+        }
+    )
 
 
 def upload_view(request):

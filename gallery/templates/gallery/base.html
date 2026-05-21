@@ -12,8 +12,10 @@
         <a class="brand-logo" href="{% url 'gallery:home' %}" aria-label="Go to home">
             <span class="logo-mark"></span>
         </a>
-        <form method="get" action="{% url 'gallery:home' %}" class="search-wrap">
-            <input name="q" type="text" value="{{ query|default:'' }}" placeholder="Search for inspiration...">
+        <form method="get" action="{% url 'gallery:home' %}" class="search-wrap search-right">
+            {% for tag_id in selected_tag_ids %}<input type="hidden" name="tags" value="{{ tag_id }}">{% endfor %}
+            <input name="q" type="text" value="{{ query|default:'' }}" placeholder="search">
+            <button type="submit" class="search-submit">Search</button>
         </form>
     </header>
     {% block content %}{% endblock %}
