@@ -101,8 +101,21 @@ body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg); co
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
 }
 .copy-image-btn:hover { background: rgba(17, 20, 34, 0.9); }
+
+.visual-card:hover .copy-image-btn,
+.visual-card:focus-within .copy-image-btn,
+.hero-wrap:hover .copy-image-btn,
+.hero-wrap:focus-within .copy-image-btn {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
 
 .global-upload-btn {
     position: fixed;
