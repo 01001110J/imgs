@@ -5,12 +5,15 @@
 
     if (dropZone && fileInput) {
         if (pickFile) {
-            pickFile.addEventListener("click", function () {
+            pickFile.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
                 fileInput.click();
             });
         }
 
         function attachFile(file) {
+            if (typeof DataTransfer === "undefined") return;
             var dt = new DataTransfer();
             dt.items.add(file);
             fileInput.files = dt.files;
@@ -100,106 +103,168 @@
 })();
 
 (function () {
+    var STORAGE_TAGS_KEY = "gallery_tag_catalog_v1";
+    var STORAGE_OVERFLOW_KEY = "gallery_bulk_overflow_v1";
+    var MAX_FILES = 200;
+
+    function normalize(value) { return (value || "").trim().toLowerCase(); }
+
+    function readInitialTags() {
+        var script = document.getElementById("all-tags-json");
+        if (!script) return [];
+        try { return JSON.parse(script.textContent || "[]"); } catch (_) { return []; }
+    }
+
+    function loadTagCatalog() {
+        var base = readInitialTags().map(normalize).filter(Boolean);
+        try {
+            var stored = JSON.parse(localStorage.getItem(STORAGE_TAGS_KEY) || "[]");
+            stored.forEach(function (tag) {
+                var v = normalize(tag);
+                if (v && base.indexOf(v) === -1) base.push(v);
+            });
+        } catch (_) {}
+        return base;
+    }
+
+    function persistTagCatalog(catalog) {
+        try { localStorage.setItem(STORAGE_TAGS_KEY, JSON.stringify(catalog)); } catch (_) {}
+    }
+
+    function persistOverflow(files) {
+        try {
+            localStorage.setItem(STORAGE_OVERFLOW_KEY, JSON.stringify(files.map(function (f) {
+                return { name: f.name, size: f.size, type: f.type, lastModified: f.lastModified };
+            })));
+        } catch (_) {}
+    }
+
     var form = document.getElementById("bulk-upload-form");
     var bulkInput = document.getElementById("bulk-images-input");
     var bulkDrop = document.getElementById("bulk-drop-zone");
     var bulkPick = document.getElementById("bulk-pick-file");
-    var bulkHiddenFields = document.getElementById("bulk-hidden-fields");
+    var hiddenFields = document.getElementById("bulk-hidden-fields");
+    var overflowNote = document.getElementById("bulk-overflow-note");
+
+    if (!form || !bulkInput || !bulkDrop || !hiddenFields) return;
 
     var modal = document.getElementById("bulk-modal");
     var preview = document.getElementById("bulk-current-preview");
     var stepLabel = document.getElementById("bulk-step-label");
-    var titleInput = document.getElementById("bulk-title-input");
     var descriptionInput = document.getElementById("bulk-description-input");
     var prevBtn = document.getElementById("bulk-prev-btn");
     var nextBtn = document.getElementById("bulk-next-btn");
     var finishBtn = document.getElementById("bulk-finish-btn");
     var cancelBtn = document.getElementById("bulk-cancel-btn");
+    var removeBtn = document.getElementById("bulk-remove-btn");
 
     var tagEditor = document.getElementById("bulk-tag-editor");
     var tagsInput = tagEditor ? tagEditor.querySelector(".js-bulk-tags-input") : null;
     var chipsWrap = tagEditor ? tagEditor.querySelector(".js-bulk-tag-chips") : null;
-    var tagFilterInput = tagEditor ? tagEditor.querySelector(".js-bulk-tag-filter") : null;
-    var allTagButtons = tagEditor ? tagEditor.querySelectorAll(".js-bulk-all-tags-list .js-bulk-add-tag") : [];
+    var suggestionsBox = tagEditor ? tagEditor.querySelector(".js-bulk-tags-suggestions-box") : null;
 
-    if (!form || !bulkInput || !bulkDrop || !modal || !preview || !titleInput || !descriptionInput || !prevBtn || !nextBtn || !finishBtn || !cancelBtn || !tagEditor || !tagsInput || !chipsWrap) return;
+    var isWizardPage = !!(modal && preview && stepLabel && descriptionInput && prevBtn && nextBtn && finishBtn && cancelBtn && removeBtn && tagEditor && tagsInput && chipsWrap && suggestionsBox);
 
     var filesList = [];
-    var catalog = [];
+    var meta = [];
     var currentIndex = 0;
+    var tagCatalog = loadTagCatalog();
 
-    function normalize(value) {
-        return (value || "").trim().toLowerCase();
-    }
-
-    function syncFileInput() {
+    function updateInputFiles() {
         if (typeof DataTransfer === "undefined") return;
         var dt = new DataTransfer();
-        filesList.forEach(function (file) { dt.items.add(file); });
+        filesList.forEach(function (f) { dt.items.add(f); });
         bulkInput.files = dt.files;
     }
 
-    function ensureCatalogSize() {
-        while (catalog.length < filesList.length) {
-            catalog.push({ title: "", description: "", tags: [] });
-        }
-        if (catalog.length > filesList.length) {
-            catalog = catalog.slice(0, filesList.length);
+    function ensureMetaSize() {
+        while (meta.length < filesList.length) meta.push({ description: "", tags: [] });
+        if (meta.length > filesList.length) meta = meta.slice(0, filesList.length);
+    }
+
+    function saveCurrent() {
+        if (!isWizardPage || !filesList.length) return;
+        var item = meta[currentIndex];
+        item.description = (descriptionInput.value || "").trim();
+        if ((tagsInput.value || "").trim()) {
+            addTag(tagsInput.value);
+            tagsInput.value = "";
         }
     }
 
-    function renderTagChips() {
-        var item = catalog[currentIndex];
+    function renderChips() {
+        if (!isWizardPage) return;
+        var item = meta[currentIndex];
         chipsWrap.innerHTML = "";
         item.tags.forEach(function (tag) {
             var chip = document.createElement("span");
             chip.className = "tag-chip";
             chip.textContent = tag;
 
-            var removeBtn = document.createElement("button");
-            removeBtn.type = "button";
-            removeBtn.className = "tag-chip-remove";
-            removeBtn.textContent = "x";
-            removeBtn.addEventListener("click", function () {
+            var remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "tag-chip-remove";
+            remove.textContent = "x";
+            remove.addEventListener("click", function () {
                 item.tags = item.tags.filter(function (t) { return t !== tag; });
-                renderTagChips();
+                renderChips();
+                renderSuggestions();
             });
 
-            chip.appendChild(removeBtn);
+            chip.appendChild(remove);
             chipsWrap.appendChild(chip);
         });
     }
 
     function addTag(raw) {
         var tag = normalize(raw);
-        if (!tag) return;
-        var item = catalog[currentIndex];
-        if (!item.tags.includes(tag)) {
-            item.tags.push(tag);
-            renderTagChips();
+        if (!tag || !isWizardPage) return;
+        var item = meta[currentIndex];
+        if (item.tags.indexOf(tag) === -1) item.tags.push(tag);
+        if (tagCatalog.indexOf(tag) === -1) {
+            tagCatalog.push(tag);
+            persistTagCatalog(tagCatalog);
         }
+        renderChips();
+        renderSuggestions();
     }
 
-    function saveCurrentStep() {
-        var item = catalog[currentIndex];
-        item.title = titleInput.value.trim();
-        item.description = descriptionInput.value.trim();
-        if (tagsInput.value.trim()) {
-            addTag(tagsInput.value);
-            tagsInput.value = "";
+    function renderSuggestions() {
+        if (!isWizardPage) return;
+        var query = normalize(tagsInput.value);
+        var item = meta[currentIndex] || { tags: [] };
+        var available = tagCatalog.filter(function (t) { return item.tags.indexOf(t) === -1; });
+        var matches = available.filter(function (t) { return !query || t.indexOf(query) !== -1; }).slice(0, 12);
+
+        suggestionsBox.innerHTML = "";
+        matches.forEach(function (tag) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "tag-suggestion-btn js-bulk-add-tag";
+            btn.setAttribute("data-tag", tag);
+            btn.textContent = tag;
+            suggestionsBox.appendChild(btn);
+        });
+
+        if (query && available.indexOf(query) === -1 && item.tags.indexOf(query) === -1) {
+            var create = document.createElement("button");
+            create.type = "button";
+            create.className = "tag-suggestion-btn js-bulk-add-tag";
+            create.setAttribute("data-tag", query);
+            create.textContent = 'Create "' + query + '"';
+            suggestionsBox.appendChild(create);
         }
     }
 
     function renderStep() {
-        ensureCatalogSize();
-        if (!filesList.length) return;
-
-        var item = catalog[currentIndex];
+        if (!isWizardPage || !filesList.length) return;
+        ensureMetaSize();
+        var item = meta[currentIndex];
         preview.src = URL.createObjectURL(filesList[currentIndex]);
-        titleInput.value = item.title;
-        descriptionInput.value = item.description;
+        descriptionInput.value = item.description || "";
         tagsInput.value = "";
-        renderTagChips();
+        renderChips();
+        renderSuggestions();
 
         stepLabel.textContent = (currentIndex + 1) + " / " + filesList.length;
         prevBtn.disabled = currentIndex === 0;
@@ -208,7 +273,7 @@
     }
 
     function openWizard() {
-        if (!filesList.length) return;
+        if (!isWizardPage || !filesList.length) return;
         modal.classList.add("is-open");
         modal.setAttribute("aria-hidden", "false");
         currentIndex = 0;
@@ -216,56 +281,78 @@
     }
 
     function closeWizard() {
+        if (!isWizardPage) return;
         modal.classList.remove("is-open");
         modal.setAttribute("aria-hidden", "true");
     }
 
-    function mergeFiles(newFiles) {
-        filesList = filesList.concat(Array.from(newFiles || []));
-        ensureCatalogSize();
-        syncFileInput();
+    function prepareFiles(fileList) {
+        var incoming = Array.from(fileList || []);
+        if (!incoming.length) return;
+
+        var accepted = incoming.slice(0, MAX_FILES);
+        var overflow = incoming.slice(MAX_FILES);
+
+        if (overflow.length) {
+            persistOverflow(overflow);
+            if (overflowNote) {
+                overflowNote.textContent = "Only first 200 files loaded. Extra files were saved as temporary metadata in your browser.";
+            }
+        } else if (overflowNote) {
+            overflowNote.textContent = "";
+        }
+
+        filesList = accepted;
+        ensureMetaSize();
+        updateInputFiles();
         openWizard();
     }
 
-    function injectHiddenFields() {
-        bulkHiddenFields.innerHTML = "";
-        catalog.forEach(function (item) {
-            var title = document.createElement("input");
-            title.type = "hidden";
-            title.name = "titles[]";
-            title.value = item.title;
-            bulkHiddenFields.appendChild(title);
+    function removeCurrent() {
+        if (!filesList.length) return;
+        filesList.splice(currentIndex, 1);
+        meta.splice(currentIndex, 1);
+        if (currentIndex >= filesList.length) currentIndex = Math.max(0, filesList.length - 1);
+        updateInputFiles();
+        if (!filesList.length) {
+            closeWizard();
+            return;
+        }
+        renderStep();
+    }
 
-            var description = document.createElement("input");
-            description.type = "hidden";
-            description.name = "descriptions[]";
-            description.value = item.description;
-            bulkHiddenFields.appendChild(description);
+    function buildHiddenFields() {
+        hiddenFields.innerHTML = "";
+        meta.forEach(function (item) {
+            var d = document.createElement("input");
+            d.type = "hidden";
+            d.name = "descriptions[]";
+            d.value = item.description || "";
+            hiddenFields.appendChild(d);
 
-            var tags = document.createElement("input");
-            tags.type = "hidden";
-            tags.name = "tags[]";
-            tags.value = item.tags.join(", ");
-            bulkHiddenFields.appendChild(tags);
+            var t = document.createElement("input");
+            t.type = "hidden";
+            t.name = "tags[]";
+            t.value = (item.tags || []).join(", ");
+            hiddenFields.appendChild(t);
         });
     }
 
     if (bulkPick) {
-        bulkPick.addEventListener("click", function () {
+        bulkPick.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
             bulkInput.click();
         });
     }
 
-    bulkDrop.addEventListener("click", function () {
+    bulkDrop.addEventListener("click", function (event) {
+        if (event.target && event.target.id === "bulk-pick-file") return;
         bulkInput.click();
     });
 
     bulkInput.addEventListener("change", function () {
-        if (bulkInput.files && bulkInput.files.length) {
-            filesList = Array.from(bulkInput.files);
-            ensureCatalogSize();
-            openWizard();
-        }
+        if (bulkInput.files && bulkInput.files.length) prepareFiles(bulkInput.files);
     });
 
     ["dragenter", "dragover"].forEach(function (eventName) {
@@ -283,70 +370,74 @@
     });
 
     bulkDrop.addEventListener("drop", function (event) {
-        var files = event.dataTransfer.files;
-        if (files && files.length) mergeFiles(files);
+        if (event.dataTransfer.files && event.dataTransfer.files.length) {
+            prepareFiles(event.dataTransfer.files);
+        }
     });
 
-    tagEditor.addEventListener("click", function (event) {
-        var button = event.target.closest(".js-bulk-add-tag");
-        if (!button) return;
-        addTag(button.getAttribute("data-tag"));
-    });
-
-    tagsInput.addEventListener("keydown", function (event) {
-        if (event.key === "Enter" || event.key === ",") {
-            event.preventDefault();
-            addTag(tagsInput.value);
+    if (isWizardPage) {
+        tagEditor.addEventListener("click", function (event) {
+            var btn = event.target.closest(".js-bulk-add-tag");
+            if (!btn) return;
+            addTag(btn.getAttribute("data-tag"));
             tagsInput.value = "";
-        } else if (event.key === "Backspace" && !tagsInput.value) {
-            var item = catalog[currentIndex];
-            if (item.tags.length) {
-                item.tags.pop();
-                renderTagChips();
+            renderSuggestions();
+            tagsInput.focus();
+        });
+
+        tagsInput.addEventListener("input", renderSuggestions);
+        tagsInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === ",") {
+                event.preventDefault();
+                addTag(tagsInput.value);
+                tagsInput.value = "";
+                renderSuggestions();
+            } else if (event.key === "Backspace" && !tagsInput.value) {
+                var item = meta[currentIndex];
+                if (item && item.tags.length) {
+                    item.tags.pop();
+                    renderChips();
+                    renderSuggestions();
+                }
             }
-        }
-    });
+        });
 
-    tagsInput.addEventListener("blur", function () {
-        if (tagsInput.value.trim()) {
-            addTag(tagsInput.value);
-            tagsInput.value = "";
-        }
-    });
+        tagsInput.addEventListener("blur", function () {
+            if ((tagsInput.value || "").trim()) {
+                addTag(tagsInput.value);
+                tagsInput.value = "";
+                renderSuggestions();
+            }
+        });
 
-    if (tagFilterInput && allTagButtons.length) {
-        tagFilterInput.addEventListener("input", function () {
-            var query = normalize(tagFilterInput.value);
-            allTagButtons.forEach(function (btn) {
-                var name = normalize(btn.getAttribute("data-tag"));
-                btn.style.display = !query || name.includes(query) ? "" : "none";
-            });
+        prevBtn.addEventListener("click", function () {
+            saveCurrent();
+            if (currentIndex > 0) {
+                currentIndex -= 1;
+                renderStep();
+            }
+        });
+
+        nextBtn.addEventListener("click", function () {
+            saveCurrent();
+            if (currentIndex < filesList.length - 1) {
+                currentIndex += 1;
+                renderStep();
+            }
+        });
+
+        finishBtn.addEventListener("click", function () {
+            saveCurrent();
+            buildHiddenFields();
+            form.submit();
+        });
+
+        removeBtn.addEventListener("click", function () {
+            removeCurrent();
+        });
+
+        cancelBtn.addEventListener("click", function () {
+            closeWizard();
         });
     }
-
-    prevBtn.addEventListener("click", function () {
-        saveCurrentStep();
-        if (currentIndex > 0) {
-            currentIndex -= 1;
-            renderStep();
-        }
-    });
-
-    nextBtn.addEventListener("click", function () {
-        saveCurrentStep();
-        if (currentIndex < filesList.length - 1) {
-            currentIndex += 1;
-            renderStep();
-        }
-    });
-
-    finishBtn.addEventListener("click", function () {
-        saveCurrentStep();
-        injectHiddenFields();
-        form.submit();
-    });
-
-    cancelBtn.addEventListener("click", function () {
-        closeWizard();
-    });
 })();

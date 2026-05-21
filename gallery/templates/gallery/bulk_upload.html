@@ -14,9 +14,10 @@
             <input id="bulk-images-input" name="images" type="file" accept="image/*" multiple class="native-file-input">
             <div id="bulk-drop-zone" class="drop-zone">
                 <p class="drop-big">Drop many images here</p>
-                <p>JPG, PNG, WEBP - multiple files supported</p>
+                <p>Max 200 files per upload</p>
                 <button type="button" class="btn" id="bulk-pick-file">Select files</button>
             </div>
+            <p class="empty-note" id="bulk-overflow-note"></p>
         </section>
 
         <div id="bulk-hidden-fields"></div>
@@ -35,37 +36,22 @@
                 </div>
 
                 <div class="bulk-fields">
-                    <label>Title (optional)</label>
-                    <input type="text" id="bulk-title-input" placeholder="Title">
-
-                    <label>Description (optional)</label>
-                    <textarea id="bulk-description-input" placeholder="Description"></textarea>
-
                     <div class="js-bulk-tag-editor" id="bulk-tag-editor">
                         <label>Tags</label>
                         <div class="chip-input-wrap">
                             <div class="tag-chips js-bulk-tag-chips"></div>
-                            <input type="text" class="js-bulk-tags-input" placeholder="Add tag and press Enter" autocomplete="off">
+                            <input type="text" class="js-bulk-tags-input" placeholder="Search or create tags" autocomplete="off">
                         </div>
-                        <div class="tag-picker">
-                            <p class="tag-section-title">Most used tags</p>
-                            <div class="tag-button-list js-bulk-popular-list">
-                                {% for tag in popular_tags %}
-                                    <button type="button" class="tag-suggestion-btn js-bulk-add-tag" data-tag="{{ tag.name }}">{{ tag.name }} ({{ tag.total }})</button>
-                                {% endfor %}
-                            </div>
-                            <input type="text" class="tag-filter-input js-bulk-tag-filter" placeholder="Search other tags...">
-                            <div class="tag-button-list js-bulk-all-tags-list">
-                                {% for tag in all_tags %}
-                                    <button type="button" class="tag-suggestion-btn js-bulk-add-tag" data-tag="{{ tag.name }}">{{ tag.name }}</button>
-                                {% endfor %}
-                            </div>
-                        </div>
+                        <div class="tag-suggestions js-bulk-tags-suggestions-box"></div>
                     </div>
+
+                    <label>Description (optional)</label>
+                    <textarea id="bulk-description-input" placeholder="Description"></textarea>
                 </div>
             </div>
 
             <div class="bulk-modal-actions">
+                <button type="button" id="bulk-remove-btn" class="btn btn-danger">Remove photo</button>
                 <button type="button" id="bulk-prev-btn" class="btn btn-light">Back</button>
                 <button type="button" id="bulk-next-btn" class="btn">Next</button>
                 <button type="button" id="bulk-finish-btn" class="btn">Finish</button>
@@ -74,4 +60,6 @@
         </div>
     </div>
 </main>
+
+{{ all_tag_names|json_script:"all-tags-json" }}
 {% endblock %}

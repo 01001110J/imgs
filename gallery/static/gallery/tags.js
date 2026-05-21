@@ -1,18 +1,45 @@
 (function () {
-    function normalizeTag(value) {
-        return value.trim().toLowerCase();
+    var STORAGE_KEY = "gallery_tag_catalog_v1";
+
+    function readInitialTags() {
+        var script = document.getElementById("all-tags-json");
+        if (!script) return [];
+        try {
+            return JSON.parse(script.textContent || "[]");
+        } catch (_) {
+            return [];
+        }
+    }
+
+    function loadCatalog() {
+        var base = readInitialTags().map(function (t) { return (t || "").trim().toLowerCase(); }).filter(Boolean);
+        try {
+            var stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+            stored.forEach(function (t) {
+                var tag = (t || "").trim().toLowerCase();
+                if (tag && base.indexOf(tag) === -1) base.push(tag);
+            });
+        } catch (_) {}
+        return base;
+    }
+
+    function saveCatalog(catalog) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(catalog)); } catch (_) {}
     }
 
     function initTagInput(container) {
         var hiddenInput = container.querySelector('input[name="tags_text"]');
         var textInput = container.querySelector(".js-tags-input");
         var chipsWrap = container.querySelector(".js-tags-chips");
-        var suggestions = container.querySelector(".js-tags-suggestions");
-        if (!hiddenInput || !textInput || !chipsWrap) return;
+        var suggestionsBox = container.querySelector(".js-tags-suggestions-box");
+        if (!hiddenInput || !textInput || !chipsWrap || !suggestionsBox) return;
 
         hiddenInput.classList.add("js-tags-hidden");
 
         var tags = [];
+        var catalog = loadCatalog();
+
+        function normalize(value) { return (value || "").trim().toLowerCase(); }
 
         function syncHidden() {
             hiddenInput.value = tags.join(", ");
@@ -33,44 +60,83 @@
                     tags = tags.filter(function (t) { return t !== tag; });
                     renderChips();
                     syncHidden();
+                    renderSuggestions();
                 });
-
                 chip.appendChild(removeBtn);
                 chipsWrap.appendChild(chip);
             });
         }
 
-        function addTag(raw) {
-            var tag = normalizeTag(raw);
-            if (tag && !tags.includes(tag)) {
-                tags.push(tag);
-                renderChips();
-                syncHidden();
+        function renderSuggestions() {
+            var q = normalize(textInput.value);
+            suggestionsBox.innerHTML = "";
+            var pool = catalog.filter(function (tag) { return tags.indexOf(tag) === -1; });
+            var filtered = pool.filter(function (tag) { return !q || tag.indexOf(q) !== -1; }).slice(0, 12);
+
+            filtered.forEach(function (tag) {
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "tag-suggestion-btn";
+                btn.textContent = tag;
+                btn.addEventListener("click", function () {
+                    addTag(tag);
+                    textInput.value = "";
+                    renderSuggestions();
+                    textInput.focus();
+                });
+                suggestionsBox.appendChild(btn);
+            });
+
+            var canCreate = q && pool.indexOf(q) === -1 && tags.indexOf(q) === -1;
+            if (canCreate) {
+                var createBtn = document.createElement("button");
+                createBtn.type = "button";
+                createBtn.className = "tag-suggestion-btn";
+                createBtn.textContent = 'Create "' + q + '"';
+                createBtn.addEventListener("click", function () {
+                    addTag(q);
+                    textInput.value = "";
+                    renderSuggestions();
+                    textInput.focus();
+                });
+                suggestionsBox.appendChild(createBtn);
             }
         }
 
-        container.addEventListener("click", function (event) {
-            var button = event.target.closest(".js-add-tag");
-            if (!button) return;
-            addTag(button.getAttribute("data-tag") || "");
-        });
+        function addTag(raw) {
+            var tag = normalize(raw);
+            if (!tag) return;
+            if (tags.indexOf(tag) === -1) {
+                tags.push(tag);
+            }
+            if (catalog.indexOf(tag) === -1) {
+                catalog.push(tag);
+                saveCatalog(catalog);
+            }
+            renderChips();
+            syncHidden();
+        }
 
         (hiddenInput.value || "").split(",").forEach(function (value) {
-            var tag = normalizeTag(value);
-            if (tag && !tags.includes(tag)) tags.push(tag);
+            var tag = normalize(value);
+            if (tag && tags.indexOf(tag) === -1) tags.push(tag);
         });
         renderChips();
         syncHidden();
+        renderSuggestions();
 
+        textInput.addEventListener("input", renderSuggestions);
         textInput.addEventListener("keydown", function (event) {
             if (event.key === "Enter" || event.key === ",") {
                 event.preventDefault();
                 addTag(textInput.value);
                 textInput.value = "";
+                renderSuggestions();
             } else if (event.key === "Backspace" && !textInput.value && tags.length) {
                 tags.pop();
                 renderChips();
                 syncHidden();
+                renderSuggestions();
             }
         });
 
@@ -78,12 +144,9 @@
             if (textInput.value.trim()) {
                 addTag(textInput.value);
                 textInput.value = "";
+                renderSuggestions();
             }
         });
-
-        if (suggestions) {
-            textInput.setAttribute("list", suggestions.id);
-        }
 
         var form = container.closest("form");
         if (form) {
@@ -93,18 +156,6 @@
                     textInput.value = "";
                 }
                 syncHidden();
-            });
-        }
-
-        var filterInput = container.querySelector(".js-tag-filter");
-        var allTagButtons = container.querySelectorAll(".js-all-tags-list .js-add-tag");
-        if (filterInput && allTagButtons.length) {
-            filterInput.addEventListener("input", function () {
-                var q = normalizeTag(filterInput.value);
-                allTagButtons.forEach(function (btn) {
-                    var name = normalizeTag(btn.getAttribute("data-tag") || "");
-                    btn.style.display = !q || name.includes(q) ? "" : "none";
-                });
             });
         }
     }

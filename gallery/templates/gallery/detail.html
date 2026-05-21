@@ -10,7 +10,6 @@
             <button type="button" class="copy-image-btn" data-copy-image="{{ image.image.url }}">Copy</button>
         </div>
         <aside class="detail-side">
-            {% if image.title %}<h1>{{ image.title }}</h1>{% endif %}
             {% if image.description %}<p>{{ image.description }}</p>{% endif %}
             <div class="chips">
                 {% for tag in image.tags.all %}

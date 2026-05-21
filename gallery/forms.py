@@ -8,16 +8,14 @@ class ImageItemForm(forms.ModelForm):
 
     class Meta:
         model = ImageItem
-        fields = ["title", "description", "image", "tags_text"]
+        fields = ["description", "image", "tags_text"]
         labels = {
-            "title": "Titulo (opcional)",
             "description": "Descripcion (opcional)",
             "image": "Imagen",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["title"].required = False
         self.fields["image"].required = False
         self.fields["image"].widget.attrs.update(
             {
@@ -30,9 +28,6 @@ class ImageItemForm(forms.ModelForm):
             self.fields["tags_text"].initial = ", ".join(
                 self.instance.tags.order_by("name").values_list("name", flat=True)
             )
-
-    def clean_title(self):
-        return (self.cleaned_data.get("title") or "").strip()
 
     def save(self, commit=True):
         item = super().save(commit=commit)

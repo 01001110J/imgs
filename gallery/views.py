@@ -72,9 +72,7 @@ def upload_view(request):
 
     context = {
         "form": form,
-        "tag_names": Tag.objects.values_list("name", flat=True),
-        "popular_tags": Tag.objects.annotate(total=Count("images")).order_by("-total", "name")[:12],
-        "all_tags": Tag.objects.annotate(total=Count("images")).order_by("name"),
+        "all_tag_names": list(Tag.objects.order_by("name").values_list("name", flat=True)),
         "mode": "create",
     }
     return render(request, "gallery/upload.html", context)
@@ -94,9 +92,7 @@ def edit_image_view(request, image_id):
     context = {
         "form": form,
         "image": image,
-        "tag_names": Tag.objects.values_list("name", flat=True),
-        "popular_tags": Tag.objects.annotate(total=Count("images")).order_by("-total", "name")[:12],
-        "all_tags": Tag.objects.annotate(total=Count("images")).order_by("name"),
+        "all_tag_names": list(Tag.objects.order_by("name").values_list("name", flat=True)),
         "mode": "edit",
     }
     return render(request, "gallery/upload.html", context)
@@ -105,17 +101,15 @@ def edit_image_view(request, image_id):
 def bulk_upload_view(request):
     if request.method == "POST":
         files = request.FILES.getlist("images")
-        titles = request.POST.getlist("titles[]")
         descriptions = request.POST.getlist("descriptions[]")
         tags_list = request.POST.getlist("tags[]")
 
         created_ids = []
         for index, file in enumerate(files):
-            title = (titles[index] if index < len(titles) else "").strip()
             description = (descriptions[index] if index < len(descriptions) else "").strip()
             tags_raw = tags_list[index] if index < len(tags_list) else ""
 
-            image = ImageItem.objects.create(title=title, description=description, image=file)
+            image = ImageItem.objects.create(title="", description=description, image=file)
             _apply_tags(image, tags_raw)
             created_ids.append(image.id)
 
@@ -124,8 +118,7 @@ def bulk_upload_view(request):
         return redirect("gallery:bulk_upload")
 
     context = {
-        "popular_tags": Tag.objects.annotate(total=Count("images")).order_by("-total", "name")[:12],
-        "all_tags": Tag.objects.annotate(total=Count("images")).order_by("name"),
+        "all_tag_names": list(Tag.objects.order_by("name").values_list("name", flat=True)),
     }
     return render(request, "gallery/bulk_upload.html", context)
 

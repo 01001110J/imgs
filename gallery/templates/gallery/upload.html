@@ -1,6 +1,6 @@
 {% extends 'gallery/base.html' %}
 
-{% block title %}{% if mode == 'edit' %}Editar{% else %}Subir{% endif %}{% endblock %}
+{% block title %}{% if mode == 'edit' %}Edit{% else %}Upload{% endif %}{% endblock %}
 
 {% block content %}
 <main class="page upload-page">
@@ -15,7 +15,7 @@
             <div id="drop-zone" class="drop-zone">
                 <p class="drop-big">Drop image here</p>
                 <p>JPG, PNG, WEBP</p>
-                <button type="button" class="btn" id="pick-file">Seleccionar archivo</button>
+                <button type="button" class="btn" id="pick-file">Select file</button>
             </div>
         </section>
 
@@ -23,47 +23,28 @@
             <form method="post" enctype="multipart/form-data" class="form-grid" id="upload-form">
                 {% csrf_token %}
                 {{ form.image }}
-                <label>Titulo (opcional)</label>
-                {{ form.title }}
-                <label>Descripcion (opcional)</label>
-                {{ form.description }}
 
-                <div class="js-tag-editor">
+                <div class="js-tag-editor" data-source="single">
                     <label>Tags</label>
                     {{ form.tags_text.as_hidden }}
                     <div class="chip-input-wrap">
                         <div class="tag-chips js-tags-chips"></div>
-                        <input class="js-tags-input" type="text" placeholder="Add tag and press Enter" autocomplete="off">
+                        <input class="js-tags-input" type="text" placeholder="Search or create tags" autocomplete="off">
                     </div>
-                    <div class="tag-picker">
-                        <p class="tag-section-title">Most used tags</p>
-                        <div class="tag-button-list">
-                            {% for tag in popular_tags %}
-                                <button type="button" class="tag-suggestion-btn js-add-tag" data-tag="{{ tag.name }}">{{ tag.name }} ({{ tag.total }})</button>
-                            {% empty %}
-                                <span class="empty-note">No tags yet.</span>
-                            {% endfor %}
-                        </div>
-                        <input type="text" class="tag-filter-input js-tag-filter" placeholder="Search other tags...">
-                        <div class="tag-button-list js-all-tags-list">
-                            {% for tag in all_tags %}
-                                <button type="button" class="tag-suggestion-btn js-add-tag" data-tag="{{ tag.name }}">{{ tag.name }}</button>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <datalist id="tag-suggestions-upload" class="js-tags-suggestions">
-                        {% for tag_name in tag_names %}
-                            <option value="{{ tag_name }}"></option>
-                        {% endfor %}
-                    </datalist>
+                    <div class="tag-suggestions js-tags-suggestions-box"></div>
                 </div>
 
+                <label>Description (optional)</label>
+                {{ form.description }}
+
                 <div class="detail-actions">
-                    <button class="btn" type="submit">{% if mode == 'edit' %}Guardar cambios{% else %}Publicar{% endif %}</button>
-                    <a class="btn btn-light" href="{% if mode == 'edit' and image %}{% url 'gallery:detail' image.id %}{% else %}{% url 'gallery:home' %}{% endif %}">Cancelar</a>
+                    <button class="btn" type="submit">{% if mode == 'edit' %}Save changes{% else %}Publish{% endif %}</button>
+                    <a class="btn btn-light" href="{% if mode == 'edit' and image %}{% url 'gallery:detail' image.id %}{% else %}{% url 'gallery:home' %}{% endif %}">Cancel</a>
                 </div>
             </form>
         </section>
     </div>
 </main>
+
+{{ all_tag_names|json_script:"all-tags-json" }}
 {% endblock %}
