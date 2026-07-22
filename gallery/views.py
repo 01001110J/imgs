@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -49,6 +50,8 @@ def home_view(request):
     selected_tags = list(Tag.objects.filter(id__in=selected_tag_ids))
     for tag in selected_tags:
         images = images.filter(tags=tag)
+
+    images = images[: settings.GALLERY_HOME_IMAGE_LIMIT]
 
     context = {
         "images": images,

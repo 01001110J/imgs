@@ -43,6 +43,18 @@ python manage.py runserver
 - Home: `http://127.0.0.1:8000/`
 - Upload: `http://127.0.0.1:8000/upload/`
 
+## Run With Docker
+
+Build and start the app:
+
+```powershell
+docker compose up --build
+```
+
+Then open `http://127.0.0.1:8000/`.
+
+Docker runs migrations automatically and keeps SQLite/media files in named volumes.
+
 ## Load Dummy Data (Fixtures)
 
 This repository includes:
